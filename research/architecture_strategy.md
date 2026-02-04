@@ -1,6 +1,4 @@
 
-Place this entire content into research/architecture_strategy.md.
-
 🏗️ Project Chimera: Domain Architecture Strategy
 
 Role: Lead Architect / Forward Deployed Engineer (FDE)
