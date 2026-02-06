@@ -1,0 +1,91 @@
+{
+  "version": "1.0",
+  "servers": {
+    "git": {
+      "command": "npx",
+      "args": ["@modelcontextprotocol/server-git", "--port", "0"],
+      "description": "Git operations for version control",
+      "capabilities": {
+        "tools": ["git_commit", "git_branch", "git_diff"],
+        "resources": ["git_status", "git_log"]
+      }
+    },
+    "filesystem": {
+      "command": "npx",
+      "args": [
+        "@modelcontextprotocol/server-filesystem",
+        "--port", "0",
+        "--allow-read", ".",
+        "--allow-write", "src/,specs/,skills/,tests/"
+      ],
+      "description": "Filesystem operations with Chimera-specific boundaries",
+      "capabilities": {
+        "tools": ["read_file", "write_file", "list_directory"],
+        "resources": ["file_watcher"],
+        "security": {
+          "read_only_paths": ["specs/", "skills/"],
+          "write_restricted_paths": ["src/"],
+          "blocked_paths": [".env", ".git/", "secrets/"]
+        }
+      }
+    },
+    "openclaw-registry": {
+      "url": "https://registry.openclaw.ai/v1/mcp",
+      "headers": {
+        "Authorization": "Bearer ${OPENCLAW_API_KEY}",
+        "X-Chimera-Agent-DID": "${AGENT_DID}"
+      },
+      "description": "OpenClaw ASN registry for agent discovery",
+      "capabilities": {
+        "tools": ["publish_manifest", "discover_agents"],
+        "resources": ["agent_reputation"],
+        "rate_limits": {
+          "publish_manifest": "12 per hour",
+          "discover_agents": "100 per minute"
+        }
+      }
+    },
+    "chimera-mcp": {
+      "command": "python",
+      "args": ["-m", "chimera.mcp_server"],
+      "description": "Chimera-native MCP server for agent operations",
+      "capabilities": {
+        "tools": [
+          "generate_script",
+          "generate_image",
+          "post_content",
+          "validate_approval_token"
+        ],
+        "resources": [
+          "trends_ethiopia",
+          "wallet_balance",
+          "agent_persona"
+        ],
+        "security": {
+          "requires_auth": true,
+          "approval_required": ["post_content"],
+          "sensitive_topics_blocked": ["politics", "health", "finance", "legal"]
+        }
+      }
+    },
+    "secrets-manager": {
+      "command": "python",
+      "args": ["-m", "chimera.secrets_proxy"],
+      "description": "Secure proxy to AWS Secrets Manager / HashiCorp Vault",
+      "capabilities": {
+        "tools": ["get_secret"],
+        "security": {
+          "audit_logging": true,
+          "rate_limit": "1 request per minute per agent",
+          "never_exposes_raw_values": true
+        }
+      }
+    }
+  },
+  "default_model": "claude-3-5-sonnet",
+  "timeout_seconds": 120,
+  "retry_policy": {
+    "max_attempts": 3,
+    "backoff_multiplier": 2.0
+  }
+}

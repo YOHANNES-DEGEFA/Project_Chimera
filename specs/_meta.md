@@ -48,3 +48,13 @@ Project Chimera is an **autonomous influencer network** where AI agents operate 
 - **AuthN/AuthZ Strategy**: Super-Orchestrators authenticate via OAuth 2.0 PKCE with Google Workspace; JWT tokens scoped to campaign_id
 
 ## 7. Specification Hierarchy
+```
+specs/
+├── _meta.md          ← THIS FILE (vision, constraints, non-goals)
+├── functional.md     ← Agent user stories & Gherkin acceptance criteria
+├── technical.md      ← API contracts, database schemas, MCP primitives, security boundaries
+├── frontend.md       ← Screen inventory, wireframes, user flows
+├── openclaw_integration.md ← ASN participation protocol
+├── rule_intent.md    ← Blueprint for generating agent rules file
+└── mcp_schema.json   ← Machine-readable MCP Tool/Resource definitions
+```

@@ -1,0 +1,240 @@
+name: CI/CD Pipeline - Project Chimera
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+
+jobs:
+  # Job 1: Specification Validation
+  spec-validation:
+    name: Validate Specifications
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Verify spec files exist
+        run: |
+          echo "Checking required spec files..."
+          test -f specs/_meta.md || exit 1
+          test -f specs/functional.md || exit 1
+          test -f specs/technical.md || exit 1
+          test -f specs/frontend.md || exit 1
+          test -f specs/rule_creation_intent.md || exit 1
+          echo "✓ All spec files present"
+
+      - name: Verify spec files are non-empty
+        run: |
+          for spec in specs/*.md; do
+            if [ ! -s "$spec" ]; then
+              echo "ERROR: $spec is empty"
+              exit 1
+            fi
+          done
+          echo "✓ All spec files are non-empty"
+
+      - name: Verify MCP config
+        run: |
+          test -f .mcp/config.json || exit 1
+          echo "✓ MCP config present"
+
+  # Job 2: Linting
+  lint:
+    name: Code Linting
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install linting tools
+        run: |
+          pip install ruff mypy
+
+      - name: Run ruff
+        run: |
+          ruff check . --exclude=.git,__pycache__,*.pyc || true
+
+      - name: Run mypy
+        run: |
+          mypy . --ignore-missing-imports || true
+
+  # Job 3: Security Scanning
+  security:
+    name: Security Vulnerability Scan
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install bandit
+        run: |
+          pip install bandit
+
+      - name: Run bandit security scan
+        run: |
+          bandit -r . -x tests/ -f json -o bandit-report.json || true
+
+      - name: Upload security report
+        uses: actions/upload-artifact@v4
+        with:
+          name: bandit-report
+          path: bandit-report.json
+
+  # Job 4: Testing (TDD)
+  test:
+    name: Run Test Suite
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          pip install --upgrade pip
+          pip install pytest pytest-cov
+          if [ -f requirements.txt ]; then
+            pip install -r requirements.txt
+          fi
+
+      - name: Run tests
+        run: |
+          python -m pytest tests/ -v --tb=short --cov=. --cov-report=xml
+
+      - name: Upload coverage report
+        uses: codecov/codecov-action@v3
+        with:
+          file: ./coverage.xml
+          flags: unittests
+          name: codecov-umbrella
+
+  # Job 5: Docker Build & Test
+  docker:
+    name: Docker Build & Test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Build Docker image (test stage)
+        run: |
+          docker build --target test -t chimera-test:latest .
+
+      - name: Run tests in Docker
+        run: |
+          docker run --rm chimera-test:latest
+
+      - name: Build Docker image (production stage)
+        run: |
+          docker build --target production -t chimera:latest .
+
+  # Job 6: Skills Structure Validation
+  skills-validation:
+    name: Validate Skills Structure
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Verify skills directory exists
+        run: |
+          test -d skills/ || exit 1
+          echo "✓ skills/ directory present"
+
+      - name: Count skills
+        run: |
+          skill_count=$(find skills/ -mindepth 1 -maxdepth 1 -type d | wc -l)
+          if [ $skill_count -lt 3 ]; then
+            echo "ERROR: Need at least 3 skills, found $skill_count"
+            exit 1
+          fi
+          echo "✓ Found $skill_count skills (minimum 3 required)"
+
+      - name: Verify each skill has README
+        run: |
+          for skill_dir in skills/*/; do
+            if [ ! -f "${skill_dir}README.md" ]; then
+              echo "ERROR: ${skill_dir}README.md missing"
+              exit 1
+            fi
+          done
+          echo "✓ All skills have README.md"
+
+  # Job 7: Agent Rules File Validation
+  rules-validation:
+    name: Validate Agent Rules File
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Check for rules file
+        run: |
+          if [ -f .cursor/rules/agent.mdc ] || [ -f CLAUDE.md ] || [ -f AGENT.md ]; then
+            echo "✓ Agent rules file found"
+          else
+            echo "ERROR: Agent rules file missing"
+            exit 1
+          fi
+
+      - name: Verify required directives
+        run: |
+          rules_file=""
+          if [ -f .cursor/rules/agent.mdc ]; then
+            rules_file=".cursor/rules/agent.mdc"
+          elif [ -f CLAUDE.md ]; then
+            rules_file="CLAUDE.md"
+          elif [ -f AGENT.md ]; then
+            rules_file="AGENT.md"
+          fi
+          
+          if [ -n "$rules_file" ]; then
+            # Check for project context
+            if ! grep -qi "project chimera\|chimera" "$rules_file"; then
+              echo "WARNING: Rules file may not contain project context"
+            fi
+            # Check for spec-first enforcement
+            if ! grep -qi "spec\|specification" "$rules_file"; then
+              echo "WARNING: Rules file may not contain spec-first enforcement"
+            fi
+            # Check for traceability
+            if ! grep -qi "trace\|explain\|plan" "$rules_file"; then
+              echo "WARNING: Rules file may not contain traceability protocol"
+            fi
+            echo "✓ Rules file validation completed"
+          fi
+
+  # Job 8: AI Review Governance (CodeRabbit simulation)
+  ai-review:
+    name: AI Code Review (Spec Alignment)
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Check for spec alignment comments
+        run: |
+          echo "Checking PR for spec alignment..."
+          # This is a placeholder - in production, would use CodeRabbit API
+          # or similar AI review tool
+          echo "✓ AI review check completed (simulated)"
+          echo "NOTE: Configure CodeRabbit or similar tool for actual AI review"

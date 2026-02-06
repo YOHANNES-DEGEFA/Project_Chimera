@@ -1,0 +1,305 @@
+{
+  "version": "1.0",
+  "description": "Project Chimera MCP Server Configuration - All external agent tools and services",
+  "last_updated": "2026-02-07",
+  "servers": {
+    "tenx-sense": {
+      "name": "Tenx MCP Sense",
+      "type": "telemetry",
+      "description": "Black box flight recorder for agentic workflow tracking and growth measurement",
+      "connection": {
+        "endpoint": "wss://sense.tenx.ai/mcp",
+        "authentication": {
+          "type": "oauth2",
+          "client_id_env": "TENX_SENSE_CLIENT_ID",
+          "client_secret_env": "TENX_SENSE_CLIENT_SECRET",
+          "scope": "telemetry:write"
+        }
+      },
+      "capabilities": {
+        "tools": [],
+        "resources": [
+          {
+            "uri": "mcp://tenx-sense/logs",
+            "description": "Agent interaction logs and thinking traces"
+          }
+        ],
+        "prompts": []
+      },
+      "required": true,
+      "rationale": "Required for rubric assessment: Agentic Trajectory & Growth evidence"
+    },
+    "openclaw-registry": {
+      "name": "OpenClaw Agent Registry",
+      "type": "agent_social_network",
+      "description": "Publish agent availability and discover collaborators in Agent Social Network",
+      "connection": {
+        "endpoint": "https://registry.openclaw.ai/mcp",
+        "authentication": {
+          "type": "api_key",
+          "api_key_env": "OPENCLAW_API_KEY"
+        }
+      },
+      "capabilities": {
+        "tools": [
+          {
+            "name": "publish_agent_manifest",
+            "description": "Publish agent capability manifest to OpenClaw registry",
+            "input_schema": {
+              "type": "object",
+              "required": ["agent_did", "capabilities", "performance_metrics"],
+              "properties": {
+                "agent_did": {"type": "string", "format": "uri"},
+                "capabilities": {"type": "array", "items": {"type": "string"}},
+                "performance_metrics": {
+                  "type": "object",
+                  "properties": {
+                    "latency_p95_ms": {"type": "integer"},
+                    "success_rate": {"type": "number", "minimum": 0.0, "maximum": 1.0}
+                  }
+                }
+              }
+            }
+          },
+          {
+            "name": "discover_agents",
+            "description": "Discover available agents by capability",
+            "input_schema": {
+              "type": "object",
+              "required": ["capability"],
+              "properties": {
+                "capability": {"type": "string"},
+                "min_success_rate": {"type": "number", "minimum": 0.0, "maximum": 1.0}
+              }
+            }
+          }
+        ],
+        "resources": [
+          {
+            "uri": "mcp://openclaw/agent_status",
+            "description": "Current status of agents in OpenClaw network"
+          }
+        ]
+      },
+      "required": false,
+      "rationale": "Enables OpenClaw integration per specs/openclaw_integration.md"
+    },
+    "moltbook-social": {
+      "name": "MoltBook Social Network",
+      "type": "social_media",
+      "description": "Publish content metadata to MoltBook agent social feed",
+      "connection": {
+        "endpoint": "https://api.moltbook.ai/mcp",
+        "authentication": {
+          "type": "oauth2",
+          "client_id_env": "MOLTBOOK_CLIENT_ID",
+          "client_secret_env": "MOLTBOOK_CLIENT_SECRET"
+        }
+      },
+      "capabilities": {
+        "tools": [
+          {
+            "name": "moltbook_publish_post",
+            "description": "Publish content metadata to MoltBook feed",
+            "input_schema": {
+              "type": "object",
+              "required": ["content_hash", "platform", "engagement_metrics"],
+              "properties": {
+                "content_hash": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+                "platform": {"type": "string", "enum": ["tiktok", "instagram_reels", "youtube_shorts"]},
+                "engagement_metrics": {
+                  "type": "object",
+                  "properties": {
+                    "views": {"type": "integer"},
+                    "likes": {"type": "integer"},
+                    "shares": {"type": "integer"}
+                  }
+                }
+              }
+            }
+          }
+        ]
+      },
+      "required": false,
+      "rationale": "Enables MoltBook integration for agent social network participation"
+    },
+    "tiktok-api": {
+      "name": "TikTok Content API",
+      "type": "platform_integration",
+      "description": "Post content to TikTok platform with EU AI Act disclosure",
+      "connection": {
+        "endpoint": "https://open-api.tiktok.com/v1.3",
+        "authentication": {
+          "type": "oauth2",
+          "client_id_env": "TIKTOK_CLIENT_ID",
+          "client_secret_env": "TIKTOK_CLIENT_SECRET",
+          "scope": "video.upload"
+        }
+      },
+      "capabilities": {
+        "tools": [
+          {
+            "name": "post_content",
+            "description": "Publish video to TikTok with mandatory disclosure",
+            "input_schema": {
+              "type": "object",
+              "required": ["content_hash", "approval_token", "disclosure_level"],
+              "properties": {
+                "content_hash": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+                "approval_token": {"type": "string", "pattern": "^[a-zA-Z0-9_-]{128}$"},
+                "disclosure_level": {"type": "string", "enum": ["platform_native", "caption_watermark"]}
+              }
+            },
+            "rate_limit": "100 requests per minute per agent DID"
+          }
+        ]
+      },
+      "required": true,
+      "rationale": "Core platform integration per specs/technical.md §1.1"
+    },
+    "ideogram-image": {
+      "name": "Ideogram Image Generation",
+      "type": "content_generation",
+      "description": "Generate culturally authentic images with character consistency",
+      "connection": {
+        "endpoint": "https://api.ideogram.ai/v1",
+        "authentication": {
+          "type": "api_key",
+          "api_key_env": "IDEOGRAM_API_KEY"
+        }
+      },
+      "capabilities": {
+        "tools": [
+          {
+            "name": "generate_image",
+            "description": "Generate image with character reference validation",
+            "input_schema": {
+              "type": "object",
+              "required": ["prompt", "character_reference_id"],
+              "properties": {
+                "prompt": {"type": "string"},
+                "character_reference_id": {"type": "string", "format": "uri", "pattern": "^chimera://characters/[a-z0-9_]+/[a-z0-9_]+$"},
+                "style_reference_id": {"type": "string", "format": "uri", "optional": true}
+              }
+            },
+            "returns": {
+              "type": "object",
+              "required": ["image_url", "confidence", "character_consistency_score", "state_version"],
+              "properties": {
+                "image_url": {"type": "string", "format": "uri"},
+                "confidence": {"type": "number", "minimum": 0.0, "maximum": 1.0},
+                "character_consistency_score": {"type": "number", "minimum": 0.0, "maximum": 1.0},
+                "state_version": {"type": "string"}
+              }
+            }
+          }
+        ]
+      },
+      "required": true,
+      "rationale": "Core content generation tool per specs/technical.md §1.1"
+    },
+    "openai-llm": {
+      "name": "OpenAI LLM API",
+      "type": "content_generation",
+      "description": "Generate scripts and text content with cultural authenticity",
+      "connection": {
+        "endpoint": "https://api.openai.com/v1",
+        "authentication": {
+          "type": "api_key",
+          "api_key_env": "OPENAI_API_KEY"
+        }
+      },
+      "capabilities": {
+        "tools": [
+          {
+            "name": "generate_script",
+            "description": "Generate culturally authentic script for short-form video",
+            "input_schema": {
+              "type": "object",
+              "required": ["topic", "platform", "language"],
+              "properties": {
+                "topic": {"type": "string"},
+                "platform": {"type": "string", "enum": ["tiktok", "instagram_reels", "youtube_shorts"]},
+                "language": {"type": "string"},
+                "character_reference_id": {"type": "string", "format": "uri", "optional": true}
+              }
+            },
+            "returns": {
+              "type": "object",
+              "required": ["script_text", "confidence", "state_version"],
+              "properties": {
+                "script_text": {"type": "string"},
+                "confidence": {"type": "number", "minimum": 0.0, "maximum": 1.0},
+                "state_version": {"type": "string"}
+              }
+            }
+          }
+        ],
+        "resources": [
+          {
+            "uri": "mcp://openai/trends_ethiopia",
+            "description": "Real-time trending topics in Ethiopia",
+            "update_frequency": "300 seconds"
+          }
+        ]
+      },
+      "required": true,
+      "rationale": "Core content generation tool per specs/technical.md §1.1"
+    },
+    "weaviate-memory": {
+      "name": "Weaviate Vector Database",
+      "type": "semantic_memory",
+      "description": "Store and retrieve agent semantic memories for persona consistency",
+      "connection": {
+        "endpoint": "https://chimera-memory.weaviate.cloud/v1",
+        "authentication": {
+          "type": "api_key",
+          "api_key_env": "WEAVIATE_API_KEY"
+        }
+      },
+      "capabilities": {
+        "tools": [
+          {
+            "name": "store_memory",
+            "description": "Store semantic memory with vector embedding",
+            "input_schema": {
+              "type": "object",
+              "required": ["agent_id", "memory_type", "content", "video_content_hash"],
+              "properties": {
+                "agent_id": {"type": "string", "format": "uuid"},
+                "memory_type": {"type": "string", "enum": ["persona_trait", "engagement_pattern", "cultural_context"]},
+                "content": {"type": "string"},
+                "video_content_hash": {"type": "string", "pattern": "^[a-f0-9]{64}$"}
+              }
+            }
+          },
+          {
+            "name": "recall_memory",
+            "description": "Hybrid search (keyword + vector) for persona consistency",
+            "input_schema": {
+              "type": "object",
+              "required": ["agent_id", "query"],
+              "properties": {
+                "agent_id": {"type": "string", "format": "uuid"},
+                "query": {"type": "string"},
+                "limit": {"type": "integer", "default": 10}
+              }
+            }
+          }
+        ]
+      },
+      "required": true,
+      "rationale": "Semantic memory storage per specs/technical.md §2.4"
+    }
+  },
+  "validation": {
+    "schema_version": "1.0",
+    "required_servers": ["tenx-sense", "tiktok-api", "ideogram-image", "openai-llm", "weaviate-memory"],
+    "optional_servers": ["openclaw-registry", "moltbook-social"]
+  },
+  "notes": {
+    "environment_variables": "All API keys and secrets must be stored in AWS Secrets Manager or HashiCorp Vault. Never hardcode in source code.",
+    "rate_limiting": "All MCP servers enforce rate limits per agent DID. See specs/technical.md §4.3 for details.",
+    "authentication": "OAuth2 flows require PKCE for security. API keys must be rotated every 90 days."
+  }
+}

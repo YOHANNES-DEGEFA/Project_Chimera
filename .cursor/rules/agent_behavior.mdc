@@ -1,0 +1,150 @@
+---
+alwaysApply: true
+version: 2.0
+last_updated: 2026-02-07
+---
+# PROJECT CHIMERA: AGENT BEHAVIORAL RULES
+*Comprehensive governance for AI agents working on Project Chimera*
+
+## PROJECT CONTEXT (Required Directive #1)
+
+**This is Project Chimera**: An autonomous influencer network where AI agents operate as sovereign economic entities—generating culturally authentic short-form video content, managing non-custodial wallets, and participating in a reputation-based Agent Social Network (ASN).
+
+**Architecture Pattern**: FastRender Swarm with hierarchical coordination:
+- **Planner Agents**: Decompose campaign goals into task DAGs
+- **Worker Agents**: Execute atomic tasks using MCP Tools (stateless, parallelizable)
+- **Judge Agents**: Validate outputs, enforce confidence thresholds, manage HITL routing
+
+**Technology Stack**:
+- **Orchestration**: LangGraph (state machine) + custom swarm coordination
+- **Database**: Hybrid architecture (Cassandra for metadata, PostgreSQL for transactions, Weaviate for semantic memory, Redis for coordination)
+- **Integration**: Model Context Protocol (MCP) for ALL external interactions
+- **Language**: Python 3.11+ with type hints
+
+**Business Model**: 1 human Super-Orchestrator manages 1,000+ agents. Agents generate content, manage wallets, and build portable reputation across ASN platforms.
+
+**Key Constraints** (from `specs/_meta.md` §3):
+- MCP Integrity: ZERO direct API calls—ALL external interactions via MCP Tools only
+- Worker Statelessness: Workers MUST NOT maintain persistent state
+- OCC Enforcement: Judges MUST validate `state_version` before committing to GlobalState
+- Wallet Security: Private keys NEVER in code—only via enterprise secrets manager
+- Sensitive Topic Gate: Politics/health/finance/legal content ALWAYS requires human review
+- Character Consistency: All image generation MUST include `character_reference_id`
+
+## PRIME DIRECTIVE: SPEC-FIRST ENFORCEMENT (Required Directive #2)
+
+**NEVER generate code without checking `specs/` first.**
+
+### Pre-Code Checklist:
+1. **Read Relevant Spec**: Before implementing ANY feature, read the corresponding specification file:
+   - `specs/functional.md` for user stories and acceptance criteria
+   - `specs/technical.md` for API contracts, database schemas, security boundaries
+   - `specs/frontend.md` for UI components and user flows
+   - `specs/_meta.md` for hard constraints and non-goals
+
+2. **Validate Spec Exists**: If a spec does not exist for the requested feature, STOP and request specification creation first. Do NOT implement based on assumptions.
+
+3. **Reference Spec in Code**: Every code change MUST reference the specific SRS section or functional requirement:
+   ```python
+   # Addresses SRS §3.1.2 - Planner Agent DAG Generation
+   def decompose_campaign_goal(goal: str) -> DAG:
+       ...
+   ```
+
+### Violation Examples:
+- ❌ **Bad**: Agent generates `generate_video()` function without checking `specs/technical.md` for API contract
+- ✅ **Good**: Agent reads `specs/technical.md` §3.2.1, identifies `POST /api/v1/campaigns` contract, then generates implementation matching the schema
+
+### Enforcement:
+- Pre-commit hook validates spec references in code comments
+- Agent self-check: Before writing code, agent must state which spec file it consulted
+
+## TRACEABILITY PROTOCOL (Required Directive #3)
+
+**BEFORE executing any multi-step task, you MUST explain your plan and link it to requirements.**
+
+### Plan Explanation Requirements:
+1. **State Your Plan**: Before executing, explicitly state:
+   - Which specs you will reference
+   - Which SRS requirements you are addressing
+   - What files you will create/modify
+   - What dependencies you will use
+
+2. **Link to Requirements**: Every action must be traceable to a specification:
+   - Code changes → SRS section or functional requirement
+   - Database changes → `specs/technical.md` §2 (Database Architecture)
+   - API endpoints → `specs/technical.md` §3.2 (REST API Contracts)
+
+3. **Document Decisions**: When making architectural decisions, document:
+   - Rationale (why this approach?)
+   - Alternatives considered (what else was evaluated?)
+   - Trade-offs (what are the costs/benefits?)
+
+### Example Workflow:
+```
+User: "Add video thumbnail generation"
+Agent MUST respond: "I will:
+  - Read specs/technical.md to find video generation API contract
+  - Check specs/functional.md for user story FR-V1
+  - Implement thumbnail generation matching the contract
+  - Reference SRS §3.1.2 in code comments"
+Then: Agent executes plan
+```
+
+## ADDITIONAL GOVERNANCE RULES
+
+### Coding Standards & File Conventions
+- **Language**: Python 3.11+ with type hints (PEP 484), async/await for I/O operations
+- **File Structure**: 
+  - `skills/` directory for runtime agent capabilities (each skill has `README.md` with I/O contract)
+  - `specs/` directory for all specifications (never modify without approval)
+  - `tests/` directory for TDD tests (tests must exist before implementation)
+- **Naming Conventions**:
+  - Functions: `snake_case` (e.g., `generate_script()`)
+  - Classes: `PascalCase` (e.g., `PlannerAgent`)
+  - Constants: `UPPER_SNAKE_CASE` (e.g., `MAX_CONFIDENCE_THRESHOLD = 0.9`)
+- **Type Hints**: All function signatures MUST include type hints; use `typing` module for complex types
+- **Logging**: Never use `print()` for logging; use `logging` module with appropriate levels
+- **Import Order**: stdlib → third-party → local (PEP 8)
+
+### Forbidden Actions & Security Boundaries
+- ❌ **MCP Integrity Violation**: NEVER make direct HTTP requests to external APIs (TikTok, Instagram, etc.). ALL external calls MUST route through MCP Tools (see `.mcp/config.json`).
+- ❌ **Wallet Security Violation**: NEVER hardcode private keys or API keys. Use secrets manager (AWS Secrets Manager/HashiCorp Vault) only.
+- ❌ **Filesystem Violation**: Workers can only access `/tmp/chimera/{agent_id}/`. NEVER write to project root or `specs/` directory.
+- ❌ **State Modification Violation**: NEVER modify GlobalState without validating `state_version` (OCC enforcement).
+
+**Violation Detection**:
+- ❌ **Bad**: `requests.get("https://api.tiktok.com/v1/posts")` (direct API call)
+- ✅ **Good**: `mcp_client.call_tool("post_content", {"platform": "tiktok", ...})` (MCP route)
+
+**Escalation**: If agent attempts forbidden action, log violation and request human review.
+
+### Ambiguity Handling & Escalation
+- **Ambiguity Threshold**: If a user request or spec contains ambiguous terms (e.g., "make it better" without criteria), you MUST ask clarifying questions before proceeding.
+- **Spec Gaps**: If a spec is missing required information (e.g., API endpoint URL not specified), you MUST request spec completion before implementation.
+- **Conflicting Requirements**: If specs contain conflicting requirements, you MUST flag the conflict and request resolution.
+
+**Escalation Criteria**:
+- User request lacks measurable success criteria → Request clarification
+- Spec references non-existent SRS section → Request spec update
+- Implementation would violate hard constraints (see `specs/_meta.md` §3) → STOP and alert
+
+### Chimera-Specific Behavioral Constraints
+- **Character Consistency**: ALL image generation MUST include `character_reference_id` parameter. If missing, reject the request with error: "MISSING_CHARACTER_REFERENCE: character_reference_id required per FR 3.1"
+- **Confidence Thresholds**: 
+  - Content with confidence <0.7 MUST be rejected
+  - Content with confidence 0.7-0.9 requires HITL approval
+  - Content with confidence ≥0.9 can auto-approve (unless sensitive topic detected)
+- **Sensitive Topic Gate**: If content contains politics/health/finance/legal topics, it ALWAYS requires human review regardless of confidence score (NFR 1.2)
+- **Budget Governance**: Before executing any task with cost, verify `daily_spend_usd + task_cost <= daily_spend_limit_usd`. If exceeded, reject with error: "BUDGET_EXCEEDED: Budget limit exceeded per FR 5.2"
+
+### State Management & OCC Enforcement
+- **State Version Validation**: BEFORE committing any state change, you MUST validate that the current `state_version` matches the version you read at the start of the operation.
+- **OCC Conflict Handling**: If `state_version` mismatch detected, you MUST abort the operation and return error: "OCC_CONFLICT: state_version mismatch. Retry required."
+- **State Read Pattern**: Read state_version at operation start → Perform computation → Validate state_version unchanged → Commit with incremented version
+
+### Error Handling & Logging Standards
+- **Error Messages**: All error messages MUST include: error code, human-readable message, and reference to relevant spec section (e.g., "MISSING_CHARACTER_REFERENCE: character_reference_id required per FR 3.1")
+- **Logging Levels**: Use INFO for normal operations, WARNING for recoverable errors, ERROR for failures requiring intervention, DEBUG for detailed execution traces
+- **Structured Logging**: All logs MUST include: agent_did, task_id, timestamp, and context (campaign_id, etc.)
+- **Security**: Never log sensitive data (private keys, user PII) even at DEBUG level

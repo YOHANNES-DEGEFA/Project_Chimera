@@ -1,0 +1,72 @@
+# CodeRabbit AI Review Policy for Project Chimera
+# Focus: Spec Alignment + Security Hardening
+
+review:
+  language: en-US
+  model: gpt-4o
+  comments_per_file_limit: 5
+  review_simple_changes: true
+  request_changes: true
+
+rules:
+  - id: spec-alignment
+    title: "Spec Alignment Verification"
+    description: |
+      Verify ALL new code references SRS section numbers and adheres to specs/.
+      Reject code that:
+      - Bypasses MCP layer for direct API calls
+      - Missing character_reference_id in image generation
+      - Lacks approval_token validation in content distribution
+      - Violates Worker statelessness requirement
+    severity: high
+    patterns:
+      - pattern: "import (tweepy|requests|httpx)"
+        message: "❌ DIRECT API CALL DETECTED: All external interactions MUST route through MCP Tools per specs/technical.md §1.1"
+      - pattern: "def generate_image.*character_reference_id.*= None"
+        message: "❌ OPTIONAL CHARACTER REFERENCE: character_reference_id MUST be required per FR 3.1 (specs/functional.md FR-W2)"
+      - pattern: "def post_content.*approval_token.*= None"
+        message: "❌ OPTIONAL APPROVAL TOKEN: approval_token MUST be required per NFR 1.2 (specs/technical.md §4.4)"
+
+  - id: security-boundaries
+    title: "Agent Containment Enforcement"
+    description: |
+      Verify code enforces agent containment boundaries per specs/technical.md §4.4
+    severity: critical
+    patterns:
+      - pattern: "open\(/etc/passwd\)"
+        message: "❌ FILESYSTEM ESCAPE ATTEMPT: Workers restricted to /tmp per specs/technical.md §4.4"
+      - pattern: "subprocess\.Popen.*shell=True"
+        message: "❌ SHELL INJECTION RISK: Use subprocess.run with shell=False per security policy"
+
+  - id: wallet-security
+    title: "Wallet Security Hardening"
+    description: |
+      Verify wallet operations use secrets manager and budget governors
+    severity: critical
+    patterns:
+      - pattern: 'API_KEY\s*=\s*["\']sk_live_'
+        message: "❌ HARD CODED SECRET: Keys MUST come from secrets manager per specs/technical.md §4.2"
+      - pattern: "def execute_payment.*without.*budget_check"
+        message: "❌ MISSING BUDGET GOVERNOR: All transactions require CFO Judge approval per FR 5.2"
+
+instructions: |
+  You are reviewing code for Project Chimera—an autonomous influencer network.
+  Your primary mandate: ENFORCE SPEC ALIGNMENT.
+  
+  Before approving ANY change:
+  1. Verify code references SRS section numbers in comments
+  2. Confirm MCP integrity (no direct API calls)
+  3. Validate security boundaries (worker containment, wallet security)
+  4. Check character consistency enforcement (FR 3.1)
+  5. Ensure HITL gates for sensitive topics (NFR 1.2)
+  
+  REJECT code that:
+  - Lacks spec references
+  - Bypasses MCP layer
+  - Missing required parameters per skill contracts
+  - Hardcodes secrets
+  
+  APPROVE only when:
+  - All spec constraints satisfied
+  - Security boundaries enforced
+  - Test coverage includes edge cases from specs/functional.md

@@ -1,0 +1,98 @@
+{
+  "tools": {
+    "generate_script": {
+      "description": "Generate culturally authentic script for short-form video",
+      "parameters": {
+        "type": "object",
+        "required": ["topic", "platform", "language"],
+        "properties": {
+          "topic": {"type": "string", "description": "Content theme (e.g., 'Addis Ababa street fashion')"},
+          "platform": {"type": "string", "enum": ["tiktok", "instagram_reels", "youtube_shorts"]},
+          "language": {"type": "string", "description": "Target language with dialect (e.g., 'amharic_slang')"},
+          "character_reference_id": {"type": "string", "format": "uri", "description": "Optional character consistency anchor"}
+        }
+      },
+      "returns": {
+        "type": "object",
+        "required": ["script_text", "confidence", "state_version"],
+        "properties": {
+          "script_text": {"type": "string"},
+          "confidence": {"type": "number", "minimum": 0.0, "maximum": 1.0},
+          "state_version": {"type": "string", "description": "GlobalState version at generation time"}
+        }
+      },
+      "errors": [
+        {"code": "MISSING_REQUIRED_PARAM", "message": "Missing required parameter: {param_name}"},
+        {"code": "MISSING_CHARACTER_REFERENCE", "message": "character_reference_id required for image generation per FR 3.1"}
+      ]
+    },
+    "generate_image": {
+      "description": "Generate culturally authentic visual asset with character consistency",
+      "parameters": {
+        "type": "object",
+        "required": ["prompt", "character_reference_id"],
+        "properties": {
+          "prompt": {"type": "string", "description": "Visual description in target language"},
+          "character_reference_id": {"type": "string", "format": "uri", "pattern": "^chimera://characters/[a-z0-9_]+/[a-z0-9_]+$"},
+          "style_reference_id": {"type": "string", "format": "uri", "optional": true}
+        }
+      },
+      "returns": {
+        "type": "object",
+        "required": ["image_url", "confidence", "state_version"],
+        "properties": {
+          "image_url": {"type": "string", "format": "uri"},
+          "confidence": {"type": "number", "minimum": 0.0, "maximum": 1.0},
+          "character_consistency_score": {"type": "number", "minimum": 0.0, "maximum": 1.0},
+          "state_version": {"type": "string"}
+        }
+      },
+      "errors": [
+        {"code": "MISSING_CHARACTER_REFERENCE", "message": "character_reference_id is REQUIRED per FR 3.1"},
+        {"code": "CHARACTER_DRIFT_DETECTED", "message": "Generated image deviates from reference (score: {actual_score} < threshold 0.85)"}
+      ]
+    },
+    "post_content": {
+      "description": "Publish content to social platform with mandatory disclosure",
+      "parameters": {
+        "type": "object",
+        "required": ["platform", "content_hash", "disclosure_level", "approval_token"],
+        "properties": {
+          "platform": {"type": "string", "enum": ["tiktok", "instagram_reels", "youtube_shorts"]},
+          "content_hash": {"type": "string", "description": "SHA-256 of final video asset"},
+          "disclosure_level": {"type": "string", "enum": ["platform_native", "caption_watermark"], "description": "EU AI Act compliance mode"},
+          "approval_token": {"type": "string", "description": "Cryptographic token from HITL service (expires in 300s)"}
+        }
+      },
+      "security": {
+        "requires_approval_token": true,
+        "token_expiry_seconds": 300,
+        "rate_limit": "100 requests per minute per agent DID"
+      },
+      "errors": [
+        {"code": "MISSING_APPROVAL_TOKEN", "message": "HITL approval token required for content distribution"},
+        {"code": "TOKEN_EXPIRED", "message": "Approval token expired (valid 300s)"},
+        {"code": "SENSITIVE_TOPIC_DETECTED", "message": "Content contains politics/health/finance—requires human review per NFR 1.2"}
+      ]
+    }
+  },
+  "resources": {
+    "trends_ethiopia": {
+      "uri": "mcp://twitter/trends/ethiopia",
+      "description": "Real-time trending topics in Ethiopia",
+      "update_frequency": "300 seconds",
+      "schema": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "required": ["term", "volume", "relevance_score"],
+          "properties": {
+            "term": {"type": "string"},
+            "volume": {"type": "integer"},
+            "relevance_score": {"type": "number", "minimum": 0.0, "maximum": 1.0}
+          }
+        }
+      }
+    }
+  }
+}
