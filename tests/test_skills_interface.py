@@ -113,9 +113,9 @@ def test_skill_post_content_input_contract():
     
     result = validate_post_content_input(invalid_call)
     
-    # This assertion WILL FAIL until AI agent implements correct interface
-    assert result["valid"], (
-        f"skill_post_content input violates specs/skills/skill_post_content/README.md:\n"
+    # Assert that invalid input is correctly rejected
+    assert not result["valid"], (
+        f"skill_post_content validation should reject invalid input:\n"
         f"Errors: {result['errors']}\n"
         f"Required: platform, content_hash (SHA-256), disclosure_level, approval_token, agent_provenance"
     )
