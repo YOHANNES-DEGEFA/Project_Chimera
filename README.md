@@ -126,27 +126,5 @@ make docker-test    # Run tests in Docker container
 make clean          # Remove build artifacts
 ```
 
-## 📊 Rubric Compliance
-
-This repository is designed to meet **all 16 rubric criteria** at Pro-tier (5 points each):
-
-- ✅ **DB & Data Management**: Complete ERD, schemas, lifecycle, migration strategy
-- ✅ **Backend**: API contracts, agent workflows, OpenClaw integration
-- ✅ **Frontend**: Complete UI specs, wireframes, user flows, component hierarchy
-- ✅ **Rule Creation Intent**: Comprehensive blueprint for generating rules file
-- ✅ **Security**: AuthN/AuthZ, secrets management, rate limiting, agent containment
-- ✅ **Acceptance Criteria**: Formal Gherkin syntax for all features
-- ✅ **MCP Configuration**: Versioned, self-documenting with connection details
-- ✅ **Agent Skills Structure**: 3+ skills with detailed I/O contracts
-- ✅ **Agent Rules File**: All three directives plus additional governance
-- ✅ **Containerization**: Multi-stage Dockerfile, reproducible environment
-- ✅ **Automation**: Makefile with setup, test, spec-check commands
-- ✅ **CI/CD & Governance**: GitHub Actions with tests, linting, security, AI review
-- ✅ **Testing (TDD)**: Failing tests validating API contracts and skill interfaces
-- ✅ **Repository Documentation**: Comprehensive README, ADRs with trade-offs
-- ⏳ **Agentic Trajectory & Growth**: Evidence via MCP Sense logs (requires active development)
-- ⏳ **Commit Progression & Git Hygiene**: Frequent meaningful commits (requires active development)
-
----
 
 *Project Chimera: Where agents are economic entities—not chatbots.*
