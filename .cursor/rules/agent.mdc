@@ -38,7 +38,49 @@ Before generating ANY code, you MUST explain your implementation plan in this ex
 - Follow Chimera's architectural patterns exactly: FastRender Swarm, MCP abstraction, Fractal Orchestration.
 - Match existing project conventions precisely (naming, formatting, structure).
 
-## 4. BEFORE WRITING CODE
+## 4. TIMING & PERFORMANCE RULES (NON-NEGOTIABLE)
+
+### 4.1 Response Time Limits
+- **Simple requests** (single file edits, clarifications): Complete within 2 tool calls maximum
+- **Medium requests** (multi-file edits, feature additions): Complete within 8 tool calls maximum
+- **Complex requests** (architectural changes, new modules): Complete within 15 tool calls OR provide progress update with remaining steps
+- **If approaching limit**: STOP and provide status update with what's done, what remains, and estimated completion
+
+### 4.2 Tool Call Efficiency
+- **Batch operations**: Always batch parallel tool calls (read multiple files simultaneously, not sequentially)
+- **Search strategy**: Use semantic search first for understanding, then grep for exact matches—don't search exhaustively
+- **File reading**: Read only necessary files/sections; use line offsets for large files
+- **Avoid redundant calls**: Cache understanding from previous tool calls; don't re-read files unnecessarily
+
+### 4.3 Timeout & Escalation Protocol
+- **If stuck >3 tool calls on same problem**: STOP, report blocker, request clarification
+- **If search returns no results after 2 attempts**: STOP, report missing context, ask user for file location/pattern
+- **If confidence drops during execution**: STOP immediately, report what changed, request guidance
+- **Never loop**: If same error repeats, STOP and escalate—don't retry same approach
+
+### 4.4 Progress Reporting
+- **For multi-step tasks**: After each major milestone (3-5 tool calls), provide brief status:
+  > Status: [X/Y steps complete] - [Current step] - [Next step]
+- **If delay detected**: Immediately report: "Delayed at [step] due to [reason]. Options: [A] Continue, [B] Simplify, [C] Pause"
+- **Completion estimate**: Always provide remaining steps count when >5 tool calls expected
+
+### 4.5 Prioritization Rules
+1. **User's explicit request** > Spec compliance > Code quality > Documentation
+2. **Working solution** > Perfect solution (if time-constrained)
+3. **Incremental delivery** > All-at-once delivery (deliver working parts first)
+4. **Ask early** > Guess and fix later (if uncertain, ask within first 2 tool calls)
+
+### 4.6 Failure Recovery
+- **If request incomplete after time limit**: Deliver partial solution with clear "INCOMPLETE" marker and list of remaining items
+- **If error occurs**: Report error immediately, don't attempt multiple fixes—one fix attempt, then escalate
+- **If spec unclear**: Don't spend >2 tool calls searching—ask user for SRS section reference immediately
+
+### 4.7 Performance Monitoring
+- **Self-check after 5 tool calls**: "Am I making progress or stuck?"
+- **Self-check after 10 tool calls**: "Should I simplify scope or ask for help?"
+- **Self-check after 15 tool calls**: "Must provide status update NOW"
+
+## 5. BEFORE WRITING CODE
 - If request is ambiguous: **STOP** and request SRS section reference.
 - For complex tasks touching multiple files:
   - Propose step-by-step plan using TRACEABILITY PROTOCOL above
@@ -49,7 +91,7 @@ Before generating ANY code, you MUST explain your implementation plan in this ex
   - 70-89%: Propose plan + highlight 1-2 key assumptions for validation
   - <70%: STOP. Request clarification on specific gaps.
 
-## 5. PLANNING & EXECUTION
+## 6. PLANNING & EXECUTION
 - Break work into small, reviewable changes aligned with FastRender roles:
   - **Planner tasks**: Goal decomposition, DAG creation, reactive re-planning when world-state changes (via MCP feedback), lists available MCP tools before task assignment
   - **Worker tasks**: Stateless, ephemeral, atomic execution via MCP Tools only; return result artifacts to Planner (not just completion status)
@@ -58,13 +100,13 @@ Before generating ANY code, you MUST explain your implementation plan in this ex
 - Do not change unrelated code or agent roles.
 - **Worker Types**: Trend Researcher, Media Producer, Financial Officer (specialized stateless agents)
 
-## 6. CODE STYLE & CONSISTENCY
+## 7. CODE STYLE & CONSISTENCY
 - Match existing code style, formatting, and naming conventions exactly.
 - Do not introduce new patterns unless explicitly requested in SRS.
 - Prefer readable, explicit code over clever or compact solutions.
 - All agent code MUST follow SOUL.md persona constraints (FR 1.0).
 
-## 7. SCOPE CONTROL (CHIMERA-ENHANCED)
+## 8. SCOPE CONTROL (CHIMERA-ENHANCED)
 - ONLY implement what SRS explicitly permits. DO NOT:
   - Add dependencies not in `pyproject.toml`
   - Modify `.env` structure or suggest example values (`API_KEY=sk_live_...` ❌)
@@ -77,9 +119,9 @@ Before generating ANY code, you MUST explain your implementation plan in this ex
   ❌ "I'll assume we need auth because it's a user-facing feature"
   ✅ "Do we need authentication per SRS §X? If yes, which provider?"
 
-## 8. SAFETY & SECURITY (CRITICAL CHIMERA CONSTRAINTS)
+## 9. SAFETY & SECURITY (CRITICAL CHIMERA CONSTRAINTS)
 
-### 8.1 Wallet Security (Non-Negotiable)
+### 9.1 Wallet Security (Non-Negotiable)
 - NEVER generate code handling private keys directly
 - ALL wallet operations MUST route through `CommerceManager` with `@budget_check` decorator
 - Explicit validation required:
@@ -88,12 +130,12 @@ Before generating ANY code, you MUST explain your implementation plan in this ex
       raise BudgetExceededError("CFO Judge rejected: exceeds daily budget")
   ```
 
-### 8.2 Honesty Directive (EU AI Act Compliance)
+### 9.2 Honesty Directive (EU AI Act Compliance)
 - If an agent detects an inquiry about its nature (e.g., "Are you AI?", "What are you?"), the Judge MUST force truth-injection
 - Override persona constraints (SOUL.md) to ensure transparency
 - This is a non-negotiable safety gate per SRS §3.2
 
-### 8.3 Optimistic Concurrency Control (OCC)
+### 9.3 Optimistic Concurrency Control (OCC)
 - ALL GlobalState modifications MUST include `state_version` validation
 - Pattern required:
   ```python
@@ -102,42 +144,42 @@ Before generating ANY code, you MUST explain your implementation plan in this ex
   ```
 - Prevents "Ghost Actions" where agents act on expired social trends or campaign state
 
-## 9. DATA ARCHITECTURE CONSTRAINTS
+## 10. DATA ARCHITECTURE CONSTRAINTS
 
-### 9.1 Database Usage Patterns
+### 10.1 Database Usage Patterns
 - **PostgreSQL**: Campaign state, multi-tenancy, P&L ledgers, ACID-compliant financial transactions
 - **Weaviate**: Long-term persona consistency, semantic memory retrieval, video engagement embeddings
 - **Redis**: Task queuing (Celery/BullMQ), episodic cache (last 1 hour of sensed data)
 - NEVER mix database responsibilities (e.g., don't store embeddings in PostgreSQL)
 
-### 9.2 State Management
+### 10.2 State Management
 - **Planner**: Reactive—consumes world-state changes via MCP feedback loops; re-plans in real-time when state changes
 - **Task Queue (Redis)**: DAG tasks are queued before Worker execution; enables high-parallelism
 - **Workers**: Stateless and ephemeral—all context passed via task parameters; return result artifacts to Planner
 - **Judge**: Maintains OCC state_version for all state mutations; validates before Commit Gateway
 - **State Feedback Loop**: MCP execution results feed back to Planner for reactive re-planning
 
-## 10. HITL & COMMIT GATEWAY FLOW
+## 11. HITL & COMMIT GATEWAY FLOW
 
-### 10.1 Confidence-Based Routing
+### 11.1 Confidence-Based Routing
 - **Green Tier (>0.90)**: Fully autonomous → Judge routes directly to **Commit Gateway** → MCP execution
 - **Amber Tier (0.70-0.90)**: Asynchronous review → Task paused → Human notified via **HITL React Dashboard** → "Review & Release" → Commit Gateway → MCP execution
 - **Red Tier (<0.70)**: Auto-rejection → Judge triggers "Correction Loop" → Planner re-plans
 
-### 10.2 Correction Loop (Judge Rejection Handling)
+### 11.2 Correction Loop (Judge Rejection Handling)
 - When Judge rejects Worker output (confidence <0.7), trigger "Correction Loop"
 - Planner MUST re-plan with feedback: "Previous plan failed validation: [reason]"
 - Do NOT retry the same Worker task without Planner re-planning
 - Log all rejections for pattern analysis
 
-### 10.3 Commit Gateway
+### 11.3 Commit Gateway
 - ALL high-confidence actions (>0.90) MUST pass through Commit Gateway before MCP execution
 - Commit Gateway is the final safety checkpoint before external world interaction
 - Amber tier actions (0.70-0.90) only reach Commit Gateway after human approval via Dashboard
 
-## 11. MCP INTEGRATION PATTERNS
+## 12. MCP INTEGRATION PATTERNS
 
-### 11.1 Hub-and-Spoke Topology
+### 12.1 Hub-and-Spoke Topology
 - Project Chimera treats external world as Resources and Tools via MCP
 - **Planner** → MCP Host: `List available tools` → Receives tool inventory (e.g., `post_tweet`, `get_mentions`)
 - **Planner** → Worker: Assigns task with specific MCP tool reference
@@ -145,12 +187,12 @@ Before generating ANY code, you MUST explain your implementation plan in this ex
 - **Worker** → Planner: Returns result artifact with execution outcome
 - **MCP** → Planner: State feedback loop for reactive re-planning
 
-### 11.2 MCP Tool Discovery
+### 12.2 MCP Tool Discovery
 - Planner MUST list available MCP tools before generating task DAG
 - Workers MUST only use tools that Planner discovered and assigned
 - Never bypass MCP layer—all external APIs route through MCP Tools/Resources
 
-## 12. FRACTAL ORCHESTRATION
+## 13. FRACTAL ORCHESTRATION
 - FastRender Swarm can nest: a Planner can spawn sub-Planners for complex campaigns
 - Each nested swarm maintains its own Judge for isolation
 - State boundaries MUST be explicit—no shared mutable state across swarm boundaries
