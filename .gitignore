@@ -1,0 +1,301 @@
+# Project Chimera - .gitignore
+# Autonomous AI Influencer System
+
+# =============================================================================
+# Python
+# =============================================================================
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+pip-log.txt
+pip-delete-this-directory.txt
+.pytest_cache/
+.coverage
+.coverage.*
+htmlcov/
+.tox/
+.nox/
+.hypothesis/
+*.cover
+*.py,cover
+.cache
+nosetests.xml
+coverage.xml
+*.log
+
+# =============================================================================
+# Virtual Environments
+# =============================================================================
+venv/
+env/
+ENV/
+env.bak/
+venv.bak/
+.venv/
+.conda/
+
+# =============================================================================
+# Environment Variables & Secrets (CRITICAL - Never Commit)
+# =============================================================================
+.env
+.env.local
+.env.*.local
+.env.production
+.env.development
+.env.test
+*.env
+secrets/
+*.key
+*.pem
+*.p12
+*.pfx
+*.crt
+*.cer
+*.jks
+*.keystore
+credentials.json
+service-account.json
+*.secret
+.secrets/
+
+# =============================================================================
+# IDE & Editor Files
+# =============================================================================
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+*.sublime-project
+*.sublime-workspace
+.project
+.classpath
+.settings/
+*.iml
+*.ipr
+*.iws
+.cursor/
+
+# =============================================================================
+# Database Files
+# =============================================================================
+*.db
+*.sqlite
+*.sqlite3
+*.db-journal
+*.db-shm
+*.db-wal
+data/
+*.dump
+*.sql.gz
+cassandra/
+postgres_data/
+redis_data/
+weaviate_data/
+
+# =============================================================================
+# Temporary Files & Agent Workspaces
+# =============================================================================
+tmp/
+temp/
+/tmp/chimera/
+*.tmp
+*.temp
+*.bak
+*.backup
+*.old
+*.orig
+agent_workspaces/
+workspace_*/
+
+# =============================================================================
+# Logs & Debugging
+# =============================================================================
+logs/
+*.log
+*.log.*
+log/
+debug.log
+error.log
+access.log
+*.logfile
+tenx-sense-logs/
+telemetry/
+
+# =============================================================================
+# MCP & Configuration (Sensitive)
+# =============================================================================
+.mcp/config.local.json
+.mcp/secrets/
+.mcp/*.key
+.mcp/*.cert
+
+# =============================================================================
+# Build & Distribution
+# =============================================================================
+*.whl
+*.tar.gz
+*.zip
+dist/
+build/
+*.build
+*.dist
+*.out
+
+# =============================================================================
+# Testing & Quality Tools
+# =============================================================================
+.pytest_cache/
+.mypy_cache/
+.dmypy.json
+dmypy.json
+.pytype/
+.ruff_cache/
+.mypy_cache/
+.hypothesis/
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+.nox/
+test-results/
+junit.xml
+test-reports/
+coverage-reports/
+
+# =============================================================================
+# OS-Specific Files
+# =============================================================================
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+Icon
+._*
+.DocumentRevisions-V100
+.fseventsd
+.Spotlight-V100
+.TemporaryItems
+.Trashes
+.VolumeIcon.icns
+.com.apple.timemachine.donotpresent
+.AppleDB
+.AppleDesktop
+Network Trash Folder
+Temporary Items
+.apdisk
+
+# Windows
+Thumbs.db
+Thumbs.db:encryptable
+ehthumbs.db
+ehthumbs_vista.db
+*.stackdump
+[Dd]esktop.ini
+$RECYCLE.BIN/
+*.cab
+*.msi
+*.msix
+*.msm
+*.msp
+*.lnk
+
+# Linux
+*~
+.fuse_hidden*
+.directory
+.Trash-*
+.nfs*
+
+# =============================================================================
+# Docker
+# =============================================================================
+.dockerignore
+docker-compose.override.yml
+.docker/
+
+# =============================================================================
+# Jupyter Notebooks (if used for research)
+# =============================================================================
+.ipynb_checkpoints/
+*.ipynb_checkpoints
+
+# =============================================================================
+# Wallet & Blockchain (CRITICAL - Never Commit)
+# =============================================================================
+wallets/
+*.wallet
+*.seed
+*.mnemonic
+keystore/
+*.keystore.json
+blockchain_data/
+*.chainstate
+
+# =============================================================================
+# Media & Generated Content (Large Files)
+# =============================================================================
+media/
+videos/
+images/generated/
+audio/
+downloads/
+*.mp4
+*.avi
+*.mov
+*.mkv
+*.webm
+*.mp3
+*.wav
+*.ogg
+*.flac
+*.png
+*.jpg
+*.jpeg
+*.gif
+*.webp
+!docs/**/*.png
+!docs/**/*.jpg
+!docs/**/*.jpeg
+
+# =============================================================================
+# Project-Specific
+# =============================================================================
+# Agent state files
+agent_state/
+global_state.json
+state_snapshots/
+
+# Cache directories
+.cache/
+cache/
+*.cache
+
+# Backup files
+*.backup
+backups/
+
+# Local development overrides
+local_config.json
+local_settings.py
+settings_local.py
