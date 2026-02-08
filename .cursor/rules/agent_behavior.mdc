@@ -73,9 +73,7 @@ last_updated: 2026-02-07
 2. **Link to Requirements**: Every action must be traceable to a specification:
    - Code changes → SRS section or functional requirement
    - Database changes → `specs/technical.md` §2 (Database Architecture)
-   - API endpoints → `specs/technical.md` §3.2 (REST API Contracts)
-
-3. **Document Decisions**: When making architectural decisions, document:
+   - API endpoints → `specs/technical.md` §3.2 (REST API Contracts)3. **Document Decisions**: When making architectural decisions, document:
    - Rationale (why this approach?)
    - Alternatives considered (what else was evaluated?)
    - Trade-offs (what are the costs/benefits?)
@@ -146,5 +144,6 @@ Then: Agent executes plan
 ### Error Handling & Logging Standards
 - **Error Messages**: All error messages MUST include: error code, human-readable message, and reference to relevant spec section (e.g., "MISSING_CHARACTER_REFERENCE: character_reference_id required per FR 3.1")
 - **Logging Levels**: Use INFO for normal operations, WARNING for recoverable errors, ERROR for failures requiring intervention, DEBUG for detailed execution traces
+
 - **Structured Logging**: All logs MUST include: agent_did, task_id, timestamp, and context (campaign_id, etc.)
 - **Security**: Never log sensitive data (private keys, user PII) even at DEBUG level
